@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Restaurant Manager | Mobile Order</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Restaurant Manager Dashboard</h1>
+
+    <div id="login-section">
+        <h2>Login</h2>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+    </div>
+
+    <div id="dashboard-section" style="display:none;">
+        <button onclick="logout()">Logout</button>
+        <h3>Add Menu Item</h3>
+        <input type="text" id="menu-name" placeholder="Item Name">
+        <input type="number" id="menu-price" placeholder="Price">
+        <input type="number" id="menu-stock" placeholder="Stock">
+        <button onclick="addItem()">Add</button>
+        <h3>Menu</h3>
+        <div id="menu-list"></div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('rest_token');
+        if (token) showDashboard();
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const res = await fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.role !== 'restaurant') { alert('Not a restaurant user'); return; }
+                token = data.token;
+                localStorage.setItem('rest_token', token);
+                showDashboard();
+            } else { alert('Failed'); }
+        }
+
+        function logout() { localStorage.removeItem('rest_token'); location.reload(); }
+
+        function showDashboard() {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('dashboard-section').style.display = 'block';
+            loadData();
+        }
+
+        async function loadData() {
+            const res = await fetch('/restaurant/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
+            const data = await res.json();
+            document.getElementById('menu-list').innerHTML = data.map(m => `
+                <div>
+                    ${m.Name} (${m.Price}円) Stock: ${m.Stock}
+                    <button onclick="updateStock(${m.ID}, ${m.Stock + 1}, ${m.IsSoldOut})">+1</button>
+                    <button onclick="updateStock(${m.ID}, ${m.Stock}, ${!m.IsSoldOut})">${m.IsSoldOut ? 'Set Active' : 'Set SoldOut'}</button>
+                </div>`).join('');
+        }
+
+        async function addItem() {
+            const name = document.getElementById('menu-name').value;
+            const price = parseInt(document.getElementById('menu-price').value);
+            const stock = parseInt(document.getElementById('menu-stock').value);
+            await fetch('/restaurant/menu', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ name, price, stock })
+            });
+            loadData();
+        }
+
+        async function updateStock(id, stock, isSoldOut) {
+            await fetch(`/restaurant/menu/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ stock, is_sold_out: isSoldOut })
+            });
+            loadData();
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Guest Order | Mobile Order</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Guest Order</h1>
+
+    <div id="enter-section">
+        <input type="text" id="rest-id" placeholder="Restaurant ID">
+        <button onclick="enter()">Enter Restaurant</button>
+        <p id="error-msg" style="color:red;"></p>
+    </div>
+
+    <div id="order-section" style="display:none;">
+        <h2 id="status-title">Ordering...</h2>
+        <div id="menu-list"></div>
+        <button style="margin-top:20px; width:100%; height:50px; background:red; color:white;"
+            onclick="checkout()">Checkout</button>
+    </div>
+
+    <script>
+        let sessionID = sessionStorage.getItem('guest_session');
+        let restID = sessionStorage.getItem('guest_rest_id');
+
+        if (sessionID && restID) {
+            loadMenu();
+        }
+
+        async function enter() {
+            restID = document.getElementById('rest-id').value;
+            const res = await fetch(`/guest/${restID}/checkin`, { method: 'POST' });
+
+            if (res.ok) {
+                const data = await res.json();
+                sessionID = data.session_id;
+                sessionStorage.setItem('guest_session', sessionID);
+                sessionStorage.setItem('guest_rest_id', restID);
+                loadMenu();
+            } else {
+                const err = await res.json();
+                document.getElementById('error-msg').innerText = err.message || 'Error entering';
+            }
+        }
+
+        async function loadMenu() {
+            const res = await fetch(`/guest/${restID}/menu?session_id=${sessionID}`);
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('enter-section').style.display = 'none';
+                document.getElementById('order-section').style.display = 'block';
+                document.getElementById('menu-list').innerHTML = data.map(m => `
+                    <div style="border-bottom:1px solid #ddd; padding:10px;">
+                        ${m.Name} - ${m.Price}円 ${m.IsSoldOut ? '(SOLD OUT)' : ''}
+                        ${!m.IsSoldOut ? '<button>Order</button>' : ''}
+                    </div>`).join('');
+            } else {
+                alert('Session expired or kicked out');
+                sessionStorage.clear();
+                location.reload();
+            }
+        }
+
+        async function checkout() {
+            await fetch(`/guest/${restID}/checkout?session_id=${sessionID}`, { method: 'POST' });
+            alert('Checked out. Thank you!');
+            sessionStorage.clear();
+            location.reload();
+        }
+    </script>
+</body>
+
+</html>

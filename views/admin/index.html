@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>System Admin | Mobile Order</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>System Admin Dashboard</h1>
+
+    <div id="login-section">
+        <h2>Login</h2>
+        <input type="email" id="email" placeholder="Email" value="admin@example.com">
+        <input type="password" id="password" placeholder="Password" value="admin123">
+        <button onclick="login()">Login</button>
+    </div>
+
+    <div id="dashboard-section" style="display:none;">
+        <button onclick="logout()">Logout</button>
+        <h3>Create Restaurant</h3>
+        <input type="text" id="rest-name" placeholder="Name">
+        <input type="email" id="rest-email" placeholder="Email">
+        <input type="password" id="rest-pass" placeholder="Password">
+        <button onclick="createRest()">Create</button>
+        <h3>Restaurants</h3>
+        <div id="rest-list"></div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('admin_token');
+        if (token) showDashboard();
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const res = await fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.role !== 'admin') { alert('Not an admin'); return; }
+                token = data.token;
+                localStorage.setItem('admin_token', token);
+                showDashboard();
+            } else { alert('Failed'); }
+        }
+
+        function logout() { localStorage.removeItem('admin_token'); location.reload(); }
+
+        function showDashboard() {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('dashboard-section').style.display = 'block';
+            loadData();
+        }
+
+        async function loadData() {
+            const res = await fetch('/admin/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
+            const data = await res.json();
+            document.getElementById('rest-list').innerHTML = data.map(r => `<div>${r.Name} (ID: ${r.ID})</div>`).join('');
+        }
+
+        async function createRest() {
+            const name = document.getElementById('rest-name').value;
+            const email = document.getElementById('rest-email').value;
+            const password = document.getElementById('rest-pass').value;
+            await fetch('/admin/restaurants', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ name, email, password })
+            });
+            loadData();
+        }
+    </script>
+</body>
+
+</html>
