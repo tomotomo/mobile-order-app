@@ -95,7 +95,11 @@
                 list.innerHTML = '';
                 staffs.forEach(s => {
                     const div = document.createElement('div');
-                    div.innerHTML = `<strong>${s.Name}</strong> (${s.Role}) - ${s.Email}`;
+                    let status = '<span style="color:green; font-weight:bold;">Active</span>';
+                    if (!s.LastLoginAt) {
+                        status = '<span style="color:orange; font-weight:bold;">Pending</span>';
+                    }
+                    div.innerHTML = `<strong>${s.Name}</strong> (${s.Role}) - ${s.Email} [${status}]`;
                     div.style.padding = "5px";
                     div.style.borderBottom = "1px solid #eee";
                     list.appendChild(div);

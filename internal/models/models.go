@@ -30,6 +30,7 @@ type SystemAdmin struct {
 	Name         string `gorm:"not null"`
 	Email        string `gorm:"unique;not null"`
 	PasswordHash string `gorm:"not null"`
+	LastLoginAt  *time.Time
 }
 
 type StaffRole string
@@ -45,6 +46,7 @@ type RestaurantStaff struct {
 	Email        string    `gorm:"unique;not null"`
 	PasswordHash string    `gorm:"not null"`
 	Role         StaffRole `gorm:"not null"` // manager or staff
+	LastLoginAt  *time.Time
 }
 
 type Restaurant struct {

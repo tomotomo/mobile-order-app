@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"mobile-order-app/internal/auth"
 	"mobile-order-app/internal/models"
@@ -34,6 +35,9 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	if err := h.DB.Where("email = ?", req.Email).First(&admin).Error; err == nil {
 		if auth.CheckPasswordHash(req.Password, admin.PasswordHash) {
 			token, _ := auth.GenerateToken(admin.ID, "admin")
+			// Update LastLoginAt
+			now := time.Now()
+			h.DB.Model(&admin).Update("last_login_at", now)
 			return c.JSON(http.StatusOK, map[string]string{"token": token, "role": "admin"})
 		}
 	}
@@ -43,6 +47,9 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	if err := h.DB.Where("email = ?", req.Email).First(&staff).Error; err == nil {
 		if auth.CheckPasswordHash(req.Password, staff.PasswordHash) {
 			token, _ := auth.GenerateToken(staff.ID, string(staff.Role))
+			// Update LastLoginAt
+			now := time.Now()
+			h.DB.Model(&staff).Update("last_login_at", now)
 			return c.JSON(http.StatusOK, map[string]string{"token": token, "role": string(staff.Role)})
 		}
 	}
