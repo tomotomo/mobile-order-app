@@ -11,8 +11,14 @@ The system is split into three separate applications sharing a common database:
     *   **Constraint**: Exclusive 1-user lock per restaurant.
 2.  **Admin App** (Port: **8081**): Internal tool for System Admins.
     *   **Features**: Create Restaurants, Send Welcome Emails (Trap/SMTP).
+    *   **Roles**:
+        *   **System Admin**: Manages Restaurants.
+        *   **Restaurant Manager**: Manages Menu & Staff.
+        *   **Restaurant Staff**: Manages Menu.
 3.  **Restaurant App** (Port: **8082**): Management tool for Restaurant Managers.
-    *   **Features**: Add Menu Items, Update Stock/Sold-Out status.
+    *   **Features**:
+        *   **Menu Management**: Add Items, Update Stock.
+        *   **Staff Management**: Invite Staff (Tiered Access), View Staff List & Status (Active/Pending).
 
 ## Tech Stack
 - **Language**: Go 1.25+

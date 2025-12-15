@@ -9,6 +9,7 @@ The project is split into 3 binaries: `cmd/admin`, `cmd/restaurant`, `cmd/guest`
 ## Tech Stack
 - **Go**: Echo v4, GORM, SQLite.
 - **Architecture**: Shared `internal/` (DB, Models, Email, Auth), Separate `cmd/` and `views/`.
+- **Data Model**: Multi-Table Inheritance (MTI) pattern. `SystemAdmin` and `RestaurantStaff` are separate tables.
 
 ## Critical Business Logic
 > [!IMPORTANT]
