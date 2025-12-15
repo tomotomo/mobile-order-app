@@ -27,6 +27,10 @@ go.work
 # OS specific
 .DS_Store
 
+# App specific
+*.log
+logs/
+
 # Application specific
 toeic_system.db
 *.db
