@@ -47,34 +47,34 @@ func (h *Handler) CreateRestaurant(c echo.Context) error {
 	hash, _ := auth.HashPassword(req.Password)
 	tx := h.DB.Begin()
 
-	user := models.User{
+	// Create Manager (RestaurantStaff)
+	manager := models.RestaurantStaff{
+		Name:         req.Name + " Manager",
 		Email:        req.Email,
 		PasswordHash: hash,
-		Name:         req.Name + " Manager",
-		Role:         models.RoleManager,
+		Role:         models.StaffRoleManager,
 	}
-	if err := tx.Create(&user).Error; err != nil {
-		tx.Rollback(); return c.JSON(500, err)
-	}
-
+	// Create Restaurant first
 	rest := models.Restaurant{
 		Name: req.Name,
-		UserID: user.ID,
 	}
 	if err := tx.Create(&rest).Error; err != nil {
 		tx.Rollback(); return c.JSON(500, err)
 	}
 
-	user.RestaurantID = &rest.ID
-	tx.Save(&user)
+	manager.RestaurantID = rest.ID
+	if err := tx.Create(&manager).Error; err != nil {
+		tx.Rollback(); return c.JSON(500, err)
+	}
+
 	tx.Commit()
 
 	// Send Welcome Email
 	subject := "Welcome to Mobile Order App"
 	body := fmt.Sprintf("Hello %s,\n\nYour restaurant '%s' has been registered.\nLogin with:\nEmail: %s\nPassword: %s", 
-		user.Name, rest.Name, user.Email, req.Password)
+		manager.Name, rest.Name, manager.Email, req.Password)
 	
-	go h.Email.Send(user.Email, subject, body)
+	go h.Email.Send(manager.Email, subject, body)
 
 	return c.JSON(http.StatusCreated, rest)
 }

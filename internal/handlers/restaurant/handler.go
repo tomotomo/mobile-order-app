@@ -29,12 +29,12 @@ func (h *Handler) Dashboard(c echo.Context) error {
 	userTok := c.Get("user").(*jwt.Token)
 	claims := userTok.Claims.(*auth.JWTClaims)
 	
-	var user models.User
+	var user models.RestaurantStaff
 	h.DB.First(&user, claims.UserID)
-	if user.RestaurantID == nil { return c.JSON(403, "no restaurant") }
+	// if user.RestaurantID == nil { return c.JSON(403, "no restaurant") } // Not nullable anymore
 
 	var items []models.MenuItem
-	h.DB.Where("restaurant_id = ?", *user.RestaurantID).Find(&items)
+	h.DB.Where("restaurant_id = ?", user.RestaurantID).Find(&items)
 	return c.JSON(http.StatusOK, items)
 }
 
@@ -47,14 +47,14 @@ type MenuItemReq struct {
 func (h *Handler) CreateMenuItem(c echo.Context) error {
 	userTok := c.Get("user").(*jwt.Token)
 	claims := userTok.Claims.(*auth.JWTClaims)
-	var user models.User
+	var user models.RestaurantStaff
 	h.DB.First(&user, claims.UserID)
 
 	req := new(MenuItemReq)
 	c.Bind(req)
 
 	item := models.MenuItem{
-		RestaurantID: *user.RestaurantID,
+		RestaurantID: user.RestaurantID,
 		Name:         req.Name,
 		Price:        req.Price,
 		Stock:        req.Stock,
@@ -73,11 +73,11 @@ func (h *Handler) InviteStaff(c echo.Context) error {
 	claims := userTok.Claims.(*auth.JWTClaims)
 
 	// Authorization Check: Only Managers can invite
-	if claims.Role != string(models.RoleManager) {
+	if claims.Role != string(models.StaffRoleManager) {
 		return c.JSON(403, "only managers can invite staff")
 	}
 
-	var manager models.User
+	var manager models.RestaurantStaff
 	h.DB.First(&manager, claims.UserID)
 
 	req := new(InviteRequest)
@@ -87,11 +87,11 @@ func (h *Handler) InviteStaff(c echo.Context) error {
 	tempPass := "staff123" // TODO: Randomize
 	hash, _ := auth.HashPassword(tempPass)
 
-	staff := models.User{
+	staff := models.RestaurantStaff{
 		Email:        req.Email,
 		Name:         req.Name,
 		PasswordHash: hash,
-		Role:         models.RoleStaff,
+		Role:         models.StaffRoleMember,
 		RestaurantID: manager.RestaurantID,
 	}
 

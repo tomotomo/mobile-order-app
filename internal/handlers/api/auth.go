@@ -29,22 +29,23 @@ func (h *AuthHandler) Login(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err)
 	}
 
-	var user models.User
-	if err := h.DB.Where("email = ?", req.Email).First(&user).Error; err != nil {
-		return c.JSON(http.StatusUnauthorized, "invalid credentials")
+	// Try System Admin
+	var admin models.SystemAdmin
+	if err := h.DB.Where("email = ?", req.Email).First(&admin).Error; err == nil {
+		if auth.CheckPasswordHash(req.Password, admin.PasswordHash) {
+			token, _ := auth.GenerateToken(admin.ID, "admin")
+			return c.JSON(http.StatusOK, map[string]string{"token": token, "role": "admin"})
+		}
 	}
 
-	if !auth.CheckPasswordHash(req.Password, user.PasswordHash) {
-		return c.JSON(http.StatusUnauthorized, "invalid credentials")
+	// Try Restaurant Staff
+	var staff models.RestaurantStaff
+	if err := h.DB.Where("email = ?", req.Email).First(&staff).Error; err == nil {
+		if auth.CheckPasswordHash(req.Password, staff.PasswordHash) {
+			token, _ := auth.GenerateToken(staff.ID, string(staff.Role))
+			return c.JSON(http.StatusOK, map[string]string{"token": token, "role": string(staff.Role)})
+		}
 	}
 
-	token, err := auth.GenerateToken(user.ID, string(user.Role))
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "failed to generate token")
-	}
-
-	return c.JSON(http.StatusOK, map[string]string{
-		"token": token,
-		"role":  string(user.Role),
-	})
+	return c.JSON(http.StatusUnauthorized, "invalid credentials")
 }

@@ -2,22 +2,29 @@
 
 ## Tables
 
-### `users`
+### `system_admins`
 | Column | Type | Notes |
 |---|---|---|
 | `id` | uint | PK |
 | `name` | string | |
 | `email` | string | Unique, Indexed |
 | `password_hash` | string | |
-| `role` | string | `admin`, `manager`, `staff` |
-| `restaurant_id` | uint | FK -> `restaurants.id` (Nullable for admin) |
+
+### `restaurant_staffs`
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uint | PK |
+| `restaurant_id` | uint | FK -> `restaurants.id` (NOT NULL) |
+| `name` | string | |
+| `email` | string | Unique, Indexed |
+| `password_hash` | string | |
+| `role` | string | `manager` or `staff` |
 
 ### `restaurants`
 | Column | Type | Notes |
 |---|---|---|
 | `id` | uint | PK |
 | `name` | string | |
-| `user_id` | uint | ID of the Creator/Manager |
 | `current_guest_session` | string | Session ID for Locking |
 | `guest_session_expires` | datetime | Lock expiration |
 
@@ -32,6 +39,7 @@
 | `is_sold_out` | boolean | |
 
 ## Relationships
-- **Restaurant** has many **Users** (Manager, Staff).
+- **Restaurant** has many **RestaurantStaffs**.
 - **Restaurant** has many **MenuItems**.
-- **User** belongs to **Restaurant** (if not admin).
+- **SystemAdmin** is standalone (manages System).
+- **RestaurantStaff** belongs to **Restaurant**.

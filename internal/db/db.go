@@ -16,7 +16,7 @@ func Init() *gorm.DB {
 	}
 
 	// Migrate the schema (Could be moved to a separate migrate tool, but ok here for prototype)
-	err = db.AutoMigrate(&models.User{}, &models.Restaurant{}, &models.MenuItem{})
+	err = db.AutoMigrate(&models.SystemAdmin{}, &models.RestaurantStaff{}, &models.Restaurant{}, &models.MenuItem{})
 	if err != nil {
 		log.Fatal("failed to migrate schema")
 	}
