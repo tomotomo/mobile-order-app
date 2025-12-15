@@ -26,7 +26,7 @@ func NewHandler(db *gorm.DB, emailSender email.Sender) *Handler {
 
 func (h *Handler) Dashboard(c echo.Context) error {
 	var rests []models.Restaurant
-	if err := h.DB.Preload("User").Find(&rests).Error; err != nil {
+	if err := h.DB.Find(&rests).Error; err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 	return c.JSON(http.StatusOK, rests)
