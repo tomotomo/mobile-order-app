@@ -44,6 +44,7 @@ func main() {
 	restGroup.POST("/menu", restH.CreateMenuItem)
 	restGroup.PUT("/menu/:id", restH.UpdateStock)
 	restGroup.POST("/staff/invite", restH.InviteStaff)
+	restGroup.GET("/staff", restH.GetStaff)
 
 	go utils.OpenBrowser("http://localhost:8082")
 

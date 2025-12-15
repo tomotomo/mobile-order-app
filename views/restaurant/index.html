@@ -32,6 +32,7 @@
 
         <div id="staff-section" style="display:none; margin-top:20px; border-top:1px solid #ccc; padding-top:10px;">
             <h3>Invite Staff</h3>
+            <div id="staff-list" style="margin-bottom: 10px; max-height: 150px; overflow-y: auto;"></div>
             <input type="email" id="staff-email" placeholder="Staff Email">
             <input type="text" id="staff-name" placeholder="Staff Name">
             <button onclick="inviteStaff()">Invite</button>
@@ -78,9 +79,28 @@
             const role = localStorage.getItem('rest_role');
             if (role === 'manager') {
                 document.getElementById('staff-section').style.display = 'block';
+                loadStaff();
             }
 
             loadData();
+        }
+
+        async function loadStaff() {
+            const res = await fetch('/restaurant/staff', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const staffs = await res.json();
+                const list = document.getElementById('staff-list');
+                list.innerHTML = '';
+                staffs.forEach(s => {
+                    const div = document.createElement('div');
+                    div.innerHTML = `<strong>${s.Name}</strong> (${s.Role}) - ${s.Email}`;
+                    div.style.padding = "5px";
+                    div.style.borderBottom = "1px solid #eee";
+                    list.appendChild(div);
+                });
+            }
         }
 
         async function inviteStaff() {
@@ -95,6 +115,7 @@
                 alert('Invitation sent (check logs for trap)');
                 document.getElementById('staff-email').value = '';
                 document.getElementById('staff-name').value = '';
+                loadStaff(); // Refresh list
             } else {
                 alert('Failed to invite');
             }
