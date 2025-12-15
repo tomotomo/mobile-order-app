@@ -9,8 +9,9 @@ import (
 type UserRole string
 
 const (
-	RoleAdmin      UserRole = "admin"
-	RoleRestaurant UserRole = "restaurant"
+	RoleAdmin   UserRole = "admin"
+	RoleManager UserRole = "manager"
+	RoleStaff   UserRole = "staff"
 	// Guests don't have a User record in this design, they are transient
 )
 
@@ -27,8 +28,8 @@ type User struct {
 type Restaurant struct {
 	gorm.Model
 	Name                 string `gorm:"not null"`
-	UserID               uint   `gorm:"not null"` // Manager ID
-	User                 User   `gorm:"foreignKey:UserID"`
+	UserID               uint   `gorm:"not null"` // Creator/Manager ID
+	Users                []User `gorm:"foreignKey:RestaurantID"` // All staff including manager
 	
 	// Single Access Locking Mechanism
 	CurrentGuestSession  string    // Session ID of the active guest

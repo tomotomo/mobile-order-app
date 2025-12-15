@@ -3,6 +3,7 @@ package main
 import (
 	"mobile-order-app/internal/auth"
 	"mobile-order-app/internal/db"
+	"mobile-order-app/internal/email"
 	"mobile-order-app/internal/handlers/api"
 	"mobile-order-app/internal/handlers/restaurant"
 	"mobile-order-app/internal/utils"
@@ -23,7 +24,9 @@ func main() {
 	e.Static("/", "views/restaurant")
 
 	authH := api.NewAuthHandler(database)
-	restH := restaurant.NewHandler(database)
+
+	emailSender := &email.LogSender{}
+	restH := restaurant.NewHandler(database, emailSender)
 
 	e.POST("/login", authH.Login)
 
@@ -40,6 +43,7 @@ func main() {
 	restGroup.GET("/dashboard", restH.Dashboard)
 	restGroup.POST("/menu", restH.CreateMenuItem)
 	restGroup.PUT("/menu/:id", restH.UpdateStock)
+	restGroup.POST("/staff/invite", restH.InviteStaff)
 
 	go utils.OpenBrowser("http://localhost:8082")
 

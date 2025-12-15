@@ -26,6 +26,9 @@ The project is split into 3 binaries: `cmd/admin`, `cmd/restaurant`, `cmd/guest`
 ## Documentation Rules
 - **Walkthroughs**: Must be written in **Japanese** (日本語).
 - **Code Comments**: English is preferred, but Japanese is acceptable for complex logic.
+- **Data Model Changes**:
+  1. MUST create a migration script in `cmd/migrate/`.
+  2. MUST update table list in `docs/er/README.md`.
 
 ## Commands
 ```bash

@@ -1,9 +1,11 @@
 package restaurant
 
 import (
+	"fmt"
 	"net/http"
 
 	"mobile-order-app/internal/auth"
+	"mobile-order-app/internal/email"
 	"mobile-order-app/internal/models"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -12,11 +14,15 @@ import (
 )
 
 type Handler struct {
-	DB *gorm.DB
+	DB    *gorm.DB
+	Email email.Sender
 }
 
-func NewHandler(db *gorm.DB) *Handler {
-	return &Handler{DB: db}
+func NewHandler(db *gorm.DB, emailSender email.Sender) *Handler {
+	return &Handler{
+		DB:    db,
+		Email: emailSender,
+	}
 }
 
 func (h *Handler) Dashboard(c echo.Context) error {
@@ -55,6 +61,52 @@ func (h *Handler) CreateMenuItem(c echo.Context) error {
 	}
 	h.DB.Create(&item)
 	return c.JSON(201, item)
+}
+
+type InviteRequest struct {
+	Email string `json:"email"`
+	Name  string `json:"name"`
+}
+
+func (h *Handler) InviteStaff(c echo.Context) error {
+	userTok := c.Get("user").(*jwt.Token)
+	claims := userTok.Claims.(*auth.JWTClaims)
+
+	// Authorization Check: Only Managers can invite
+	if claims.Role != string(models.RoleManager) {
+		return c.JSON(403, "only managers can invite staff")
+	}
+
+	var manager models.User
+	h.DB.First(&manager, claims.UserID)
+
+	req := new(InviteRequest)
+	if err := c.Bind(req); err != nil { return c.JSON(400, err) }
+
+	// Generate temp password (random 8 chars for MVP)
+	tempPass := "staff123" // TODO: Randomize
+	hash, _ := auth.HashPassword(tempPass)
+
+	staff := models.User{
+		Email:        req.Email,
+		Name:         req.Name,
+		PasswordHash: hash,
+		Role:         models.RoleStaff,
+		RestaurantID: manager.RestaurantID,
+	}
+
+	if err := h.DB.Create(&staff).Error; err != nil {
+		return c.JSON(500, err)
+	}
+
+	// Send Email
+	subject := "Invitation to Mobile Order App"
+	body := fmt.Sprintf("Hello %s,\n\nYou have been invited to join '%s' as staff.\nLogin with:\nEmail: %s\nPassword: %s",
+		req.Name, "Your Restaurant", req.Email, tempPass) // Ideally fetch Restaurant Name
+
+	go h.Email.Send(req.Email, subject, body)
+
+	return c.JSON(201, staff)
 }
 
 func (h *Handler) UpdateStock(c echo.Context) error {

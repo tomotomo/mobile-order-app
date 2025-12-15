@@ -51,7 +51,7 @@ func (h *Handler) CreateRestaurant(c echo.Context) error {
 		Email:        req.Email,
 		PasswordHash: hash,
 		Name:         req.Name + " Manager",
-		Role:         models.RoleRestaurant,
+		Role:         models.RoleManager,
 	}
 	if err := tx.Create(&user).Error; err != nil {
 		tx.Rollback(); return c.JSON(500, err)

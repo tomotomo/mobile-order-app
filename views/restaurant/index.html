@@ -29,6 +29,14 @@
         <input type="number" id="menu-price" placeholder="Price">
         <input type="number" id="menu-stock" placeholder="Stock">
         <button onclick="addItem()">Add</button>
+
+        <div id="staff-section" style="display:none; margin-top:20px; border-top:1px solid #ccc; padding-top:10px;">
+            <h3>Invite Staff</h3>
+            <input type="email" id="staff-email" placeholder="Staff Email">
+            <input type="text" id="staff-name" placeholder="Staff Name">
+            <button onclick="inviteStaff()">Invite</button>
+        </div>
+
         <h3>Menu</h3>
         <div id="menu-list"></div>
     </div>
@@ -47,19 +55,49 @@
             });
             if (res.ok) {
                 const data = await res.json();
-                if (data.role !== 'restaurant') { alert('Not a restaurant user'); return; }
+                if (data.role !== 'manager' && data.role !== 'staff') { alert('Not a restaurant user'); return; }
                 token = data.token;
                 localStorage.setItem('rest_token', token);
+                // Save role locally to control UI visibility
+                localStorage.setItem('rest_role', data.role);
                 showDashboard();
             } else { alert('Failed'); }
         }
 
-        function logout() { localStorage.removeItem('rest_token'); location.reload(); }
+        function logout() {
+            localStorage.removeItem('rest_token');
+            localStorage.removeItem('rest_role');
+            location.reload();
+        }
 
         function showDashboard() {
             document.getElementById('login-section').style.display = 'none';
             document.getElementById('dashboard-section').style.display = 'block';
+
+            // Only Managers see Staff Invite
+            const role = localStorage.getItem('rest_role');
+            if (role === 'manager') {
+                document.getElementById('staff-section').style.display = 'block';
+            }
+
             loadData();
+        }
+
+        async function inviteStaff() {
+            const email = document.getElementById('staff-email').value;
+            const name = document.getElementById('staff-name').value;
+            const res = await fetch('/restaurant/staff/invite', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ email, name })
+            });
+            if (res.ok) {
+                alert('Invitation sent (check logs for trap)');
+                document.getElementById('staff-email').value = '';
+                document.getElementById('staff-name').value = '';
+            } else {
+                alert('Failed to invite');
+            }
         }
 
         async function loadData() {
