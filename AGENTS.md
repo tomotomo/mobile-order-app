@@ -31,6 +31,9 @@ The project is split into 3 binaries: `cmd/admin`, `cmd/restaurant`, `cmd/guest`
   1. MUST create a migration script in `cmd/migrate/`.
   2. MUST update table list in `docs/er/README.md`.
 
+## Process Rules
+- **Auto Commit**: When user acceptance testing is confirmed to be complete, automatically commit changes.
+
 ## Commands
 ```bash
 go run cmd/guest/main.go
