@@ -3,6 +3,7 @@ package main
 import (
 	"mobile-order-app/internal/auth"
 	"mobile-order-app/internal/db"
+	"mobile-order-app/internal/email"
 	"mobile-order-app/internal/handlers/admin"
 	"mobile-order-app/internal/handlers/api"
 	"mobile-order-app/internal/utils"
@@ -25,7 +26,13 @@ func main() {
 
 	// Dependencies
 	authH := api.NewAuthHandler(database)
-	adminH := admin.NewHandler(database)
+	
+	// Use LogSender (Trap) by default
+	emailSender := &email.LogSender{}
+	// For Mailtrap, uncomment and fill:
+	// emailSender := &email.SmtpSender{Host: "sandbox.smtp.mailtrap.io", Port: "2525", Username: "...", Password: "..."}
+
+	adminH := admin.NewHandler(database, emailSender)
 
 	// Public Routes
 	e.POST("/login", authH.Login)

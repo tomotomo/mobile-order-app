@@ -1,9 +1,11 @@
 package admin
 
 import (
+	"fmt"
 	"net/http"
 
 	"mobile-order-app/internal/auth"
+	"mobile-order-app/internal/email"
 	"mobile-order-app/internal/models"
 
 	"github.com/labstack/echo/v4"
@@ -11,11 +13,15 @@ import (
 )
 
 type Handler struct {
-	DB *gorm.DB
+	DB    *gorm.DB
+	Email email.Sender
 }
 
-func NewHandler(db *gorm.DB) *Handler {
-	return &Handler{DB: db}
+func NewHandler(db *gorm.DB, emailSender email.Sender) *Handler {
+	return &Handler{
+		DB:    db,
+		Email: emailSender,
+	}
 }
 
 func (h *Handler) Dashboard(c echo.Context) error {
@@ -62,6 +68,13 @@ func (h *Handler) CreateRestaurant(c echo.Context) error {
 	user.RestaurantID = &rest.ID
 	tx.Save(&user)
 	tx.Commit()
+
+	// Send Welcome Email
+	subject := "Welcome to Mobile Order App"
+	body := fmt.Sprintf("Hello %s,\n\nYour restaurant '%s' has been registered.\nLogin with:\nEmail: %s\nPassword: %s", 
+		user.Name, rest.Name, user.Email, req.Password)
+	
+	go h.Email.Send(user.Email, subject, body)
 
 	return c.JSON(http.StatusCreated, rest)
 }
